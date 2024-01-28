@@ -52,7 +52,7 @@ maindloop: $(OBJECTS_MAIN) $(LIB_D_LOOP)
 maindrec: $(OBJECTS_MAIN) $(LIB_D_REC) 
 	$(CC) -o maindrec $(OBJECTS_MAIN) ./$(LIB_D_REC) -lm
 
-all: loops loopd recursives recursived mains maindloop maindrec
+all: $(LIB_S_LOOP) $(LIB_D_LOOP) $(LIB_S_REC) $(LIB_D_REC) $(OBJECTS_MAIN) $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC) $(LIB_S_REC) $(OBJECTS_MAIN) $(LIB_D_LOOP) $(OBJECTS_MAIN) $(LIB_D_REC)
 
 .PHONY: clean all
 
