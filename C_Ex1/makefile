@@ -1,53 +1,64 @@
 CC = gcc
 AR = ar
-CFLAGS = -Wall -g
-LDFLAGS = -lm
+FLAGS = -Wall -g -c
+OBJECTS_MAIN = main.o
+OBJECTS_BASIC = basicClassification.o
+OBJECTS_ADVANCED_LOOP = advancedClassificationLoop.o
+OBJECTS_ADVANCED_REC = advancedClassificationRecursion.o
+LIB_D_REC = libclassrec.so
+LIB_S_REC = libclassrec.a
+LIB_D_LOOP = libclassloops.so
+LIB_S_LOOP = libclassloops.a
 
-SRC_DIR = src
-OBJ_DIR = obj
-LIB_DIR = lib
-BIN_DIR = bin
 
-OBJECTS_MAIN = $(OBJ_DIR)/main.o
-OBJECTS_BASIC = $(OBJ_DIR)/basicClassification.o
-OBJECTS_ADVANCED_LOOP = $(OBJ_DIR)/advancedClassificationLoop.o
-OBJECTS_ADVANCED_REC = $(OBJ_DIR)/advancedClassificationRecursion.o
-LIB_D_REC = $(LIB_DIR)/libclassrec.so
-LIB_S_REC = $(LIB_DIR)/libclassrec.a
-LIB_D_LOOP = $(LIB_DIR)/libclassloops.so
-LIB_S_LOOP = $(LIB_DIR)/libclassloops.a
-EXECUTABLES = $(BIN_DIR)/mains $(BIN_DIR)/maindloop $(BIN_DIR)/maindrec
 
-.PHONY: all clean
+mains: $(OBJECTS_MAIN) $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC) $(LIB_S_REC)
+	$(CC) -o mains main.o $(LIB_S_REC) -lm
 
-all: $(EXECUTABLES)
+main.o: main.c
+	$(CC) $(FLAGS) main.c -o $(OBJECTS_MAIN)
+	
+loops: $(LIB_S_LOOP)
+	
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(@D)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJECTS_BASIC): basicClassification.c
+	$(CC) $(FLAGS) basicClassification.c
 
-$(LIB_S_REC): $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC)
-	$(AR) -rcs $@ $^
+$(OBJECTS_ADVANCED_LOOP): advancedClassificationLoop.c
+	$(CC) $(FLAGS) advancedClassificationLoop.c
+
+recursives: $(LIB_S_REC)
+
+$(OBJECTS_ADVANCED_REC): advancedClassificationRecursion.c
+	$(CC) $(FLAGS) advancedClassificationRecursion.c
+
+recursived: $(LIB_D_REC)
 
 $(LIB_D_REC): $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC)
-	$(CC) -shared $^ -o $@
-
-$(LIB_S_LOOP): $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_LOOP)
-	$(AR) -rcs $@ $^
+	$(CC) -shared $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC) -o $(LIB_D_REC)
+	
+loopd: $(LIB_D_LOOP)
 
 $(LIB_D_LOOP): $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_LOOP)
-	$(CC) -shared $^ -o $@
+	$(CC) -shared $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_LOOP) -o $(LIB_D_LOOP)
+	
+$(LIB_S_REC): $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC)	
+	$(AR) -rsc $(LIB_S_REC) $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC)
+	
+$(LIB_S_LOOP): $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_LOOP)
+	$(AR) -rsc $(LIB_S_LOOP) $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_LOOP)
 
-$(BIN_DIR)/mains: $(OBJECTS_MAIN) $(OBJECTS_BASIC) $(OBJECTS_ADVANCED_REC) $(LIB_S_REC)
-	$(CC) $^ -o $@ $(LDFLAGS)
 
-$(BIN_DIR)/maindloop: $(OBJECTS_MAIN) $(LIB_D_LOOP)
-	$(CC) $< -L$(LIB_DIR) -lclassloops -o $@ $(LDFLAGS)
+	
+maindloop: $(OBJECTS_MAIN) $(LIB_D_LOOP) 
+	$(CC) -o maindloop $(OBJECTS_MAIN) ./$(LIB_D_LOOP) -lm
+	
+maindrec: $(OBJECTS_MAIN) $(LIB_D_REC) 
+	$(CC) -o maindrec $(OBJECTS_MAIN) ./$(LIB_D_REC) -lm
 
-$(BIN_DIR)/maindrec: $(OBJECTS_MAIN) $(LIB_D_REC)
-	$(CC) $< -L$(LIB_DIR) -lclassrec -o $@ $(LDFLAGS)
+all: loops loopd recursives recursived mains maindloop maindrec
 
-clean:
-	rm -rf $(OBJ_DIR) $(LIB_DIR) $(BIN_DIR)
+.PHONY: clean all
 
--include $(OBJ_DIR)/*.d
+clean: 
+	rm -f *.o *.a *.so maindloop maindrec mains
